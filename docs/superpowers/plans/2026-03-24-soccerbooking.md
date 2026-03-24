@@ -10,12 +10,45 @@
 
 ---
 
+## Generation Constraints
+
+These rules apply to every agent or worker executing this plan. They are non-negotiable.
+
+**Environment**
+- Do NOT attempt to run the project locally at any point during generation.
+- The goal is solely to generate complete and functional source files.
+- The database is remote and not accessible from this environment — do NOT attempt to connect to it or run migrations at any point.
+- Do NOT run any git commands. Version control will be handled manually at a later stage.
+
+**Docker**
+- Once all source files are generated, produce a `Dockerfile` and `docker-compose.yml` ready to be built on a remote server.
+- Do NOT run `docker build` or any command that requires a local Docker daemon.
+
+**Database initialisation**
+- Use **Alembic** for schema management. The first migration (`001_initial_schema.py`) contains the full data model: table creation, indexes, and constraints.
+- Generate an `entrypoint.sh` script that runs `alembic upgrade head` automatically before starting the app — no manual migration step ever required.
+- This approach is idempotent (safe to run on every container restart) and handles future schema changes naturally from a single source of truth.
+- Do NOT generate a separate `init.sql`. Alembic is the canonical schema definition.
+
+**Tests**
+- Do NOT run or generate tests during the source-file generation phase.
+- Once all source files and the `Dockerfile` are complete, generate all tests in `tests/`, clearly separated from the main source code.
+- Tests will be executed later, after the Docker image has been deployed on the remote server.
+
+**Assumptions & confirmations**
+- Do NOT prompt for confirmation during generation. Make reasonable assumptions and document them in `ASSUMPTIONS.md` at the root of the project.
+- Only pause and ask if a decision is a true blocker that cannot be reasonably inferred from the spec.
+
+---
+
 ## File Structure
 
 ```
 SoccerBooking/
 ├── docker-compose.yml
 ├── Dockerfile
+├── entrypoint.sh            # Runs alembic upgrade head then starts uvicorn
+├── ASSUMPTIONS.md           # Generated during implementation — documents all non-spec decisions
 ├── pyproject.toml
 ├── alembic.ini
 ├── alembic/
@@ -109,7 +142,16 @@ line-length = 100
 asyncio_mode = "auto"
 ```
 
-- [ ] **Step 2: Create `Dockerfile`**
+- [ ] **Step 2: Create `entrypoint.sh`**
+
+```bash
+#!/bin/sh
+set -e
+alembic upgrade head
+exec uvicorn backend.main:app --host 0.0.0.0 --port 8000
+```
+
+- [ ] **Step 3: Create `Dockerfile`**
 
 ```dockerfile
 FROM python:3.12-slim
@@ -117,10 +159,11 @@ WORKDIR /app
 COPY pyproject.toml .
 RUN pip install -e .
 COPY . .
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+RUN chmod +x entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
 ```
 
-- [ ] **Step 3: Create `docker-compose.yml`**
+- [ ] **Step 5: Create `docker-compose.yml`**
 
 ```yaml
 services:
@@ -149,7 +192,7 @@ volumes:
   pgdata:
 ```
 
-- [ ] **Step 4: Create `backend/config.py`**
+- [ ] **Step 6: Create `backend/config.py`**
 
 ```python
 import os
@@ -161,7 +204,7 @@ TIMEZONE = os.environ.get("TIMEZONE", "Europe/Paris")
 SESSION_MAX_AGE = int(os.environ.get("SESSION_MAX_AGE", "604800"))
 ```
 
-- [ ] **Step 5: Create `.env.example`**
+- [ ] **Step 7: Create `.env.example`**
 
 ```
 DATABASE_URL=postgresql://soccer:soccer@db:5432/soccerbooking

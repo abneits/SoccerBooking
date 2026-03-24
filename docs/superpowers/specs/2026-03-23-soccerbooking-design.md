@@ -283,3 +283,34 @@ Accessible to any logged-in player. Single action: **change own PIN**.
 - Multiple concurrent slots per week
 - Registration approval workflow
 - Retry logic for webhook failures
+
+---
+
+## Generation Constraints
+
+These rules apply to any agent or worker implementing this spec.
+
+**Environment**
+- Do NOT attempt to run the project locally at any point during generation.
+- The goal is solely to generate complete and functional source files.
+- The database is remote and not accessible from this environment — do NOT attempt to connect to it or run migrations at any point.
+- Do NOT run any git commands. Version control will be handled manually at a later stage.
+
+**Docker**
+- Once all source files are generated, produce a `Dockerfile` and `docker-compose.yml` ready to be built on a remote server.
+- Do NOT run `docker build` or any command that requires a local Docker daemon.
+
+**Database initialisation**
+- Use **Alembic** for schema management. The first migration (`001_initial_schema.py`) contains the full data model: table creation, indexes, and constraints.
+- Generate an `entrypoint.sh` script that runs `alembic upgrade head` automatically before starting the app — no manual migration step ever required.
+- This approach is idempotent (safe to run on every container restart) and handles future schema changes naturally from a single source of truth.
+- Do NOT generate a separate `init.sql`. Alembic is the canonical schema definition.
+
+**Tests**
+- Do NOT run or generate tests during the source-file generation phase.
+- Once all source files and the `Dockerfile` are complete, generate all tests in `tests/`, clearly separated from the main source code.
+- Tests will be executed later, after the Docker image has been deployed on the remote server.
+
+**Assumptions & confirmations**
+- Do NOT prompt for confirmation during generation. Make reasonable assumptions and document them in `ASSUMPTIONS.md` at the root of the project.
+- Only pause and ask if a decision is a true blocker that cannot be reasonably inferred from this spec.

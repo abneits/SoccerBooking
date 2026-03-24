@@ -1,0 +1,378 @@
+/* ============================================================
+   SoccerBooking — mobile-first CSS (375px baseline)
+   ============================================================ */
+
+/* Reset & box model */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* CSS custom properties */
+:root {
+  --primary:       #2d6a4f;
+  --primary-light: #52b788;
+  --primary-dark:  #1b4332;
+  --danger:        #e63946;
+  --danger-dark:   #c1121f;
+  --warn:          #f4a261;
+  --bg:            #f4f6f4;
+  --surface:       #ffffff;
+  --text:          #212529;
+  --muted:         #6c757d;
+  --border:        #dee2e6;
+  --radius:        10px;
+  --radius-sm:     6px;
+  --shadow:        0 2px 8px rgba(0, 0, 0, .08);
+  --shadow-md:     0 4px 16px rgba(0, 0, 0, .12);
+}
+
+/* Base */
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
+main {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+h1 { font-size: 1.75rem; font-weight: 700; color: var(--primary-dark); }
+h2 { font-size: 1.25rem; font-weight: 600; }
+h3 { font-size: .9375rem; font-weight: 600; }
+
+a { color: var(--primary); text-decoration: none; }
+a:hover, a:focus { text-decoration: underline; }
+
+/* ── Forms ───────────────────────────────────────────────── */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+input, select, textarea {
+  width: 100%;
+  min-height: 44px;           /* touch target */
+  padding: .625rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s ease;
+  -webkit-appearance: none;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(82, 183, 136, .2);
+}
+
+input::placeholder { color: var(--muted); }
+
+/* ── Buttons ─────────────────────────────────────────────── */
+button {
+  min-height: 44px;           /* touch target */
+  padding: .625rem 1.5rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease, transform .1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active  { transform: scale(.97); }
+button:hover   { background: var(--primary-light); }
+
+button.danger  { background: var(--danger); }
+button.danger:hover { background: var(--danger-dark); }
+
+button.small   { min-height: 32px; padding: .25rem .6rem; font-size: .875rem; }
+
+/* ── Feedback messages ────────────────────────────────────── */
+.error {
+  padding: .625rem 1rem;
+  background: #fff0f0;
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger-dark);
+  font-size: .9375rem;
+}
+
+.success {
+  padding: .625rem 1rem;
+  background: #f0fff4;
+  border-left: 3px solid var(--primary-light);
+  border-radius: var(--radius-sm);
+  color: var(--primary-dark);
+  font-size: .9375rem;
+}
+
+.muted { color: var(--muted); font-size: .875rem; }
+
+/* ── Page header ─────────────────────────────────────────── */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .75rem 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 { font-size: 1.375rem; }
+
+.page-header nav {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  font-size: .875rem;
+}
+
+.page-header nav a { color: var(--muted); }
+.page-header nav a:hover { color: var(--primary); text-decoration: none; }
+
+/* ── Auth pages ──────────────────────────────────────────── */
+.auth-page {
+  max-width: 360px;
+  margin: 2rem auto 0;
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-page h1 { color: var(--primary); margin-bottom: .25rem; }
+.auth-page h2 { font-size: 1.125rem; color: var(--muted); font-weight: 400; }
+
+/* ── Slot card ───────────────────────────────────────────── */
+.slot-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem;
+}
+
+.slot-card h2 { margin-bottom: .375rem; }
+.slot-card.cancelled { opacity: .75; }
+
+/* ── State badge ─────────────────────────────────────────── */
+.state-badge {
+  display: inline-block;
+  padding: .2rem .75rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.state-open     { background: #d8f3dc; color: #1b4332; }
+.state-closed   { background: #fff3cd; color: #664d03; }
+.state-frozen   { background: #cfe2ff; color: #084298; }
+.state-cancelled { background: #f8d7da; color: #58151c; }
+
+/* ── Confirmed count ─────────────────────────────────────── */
+.confirmed-count {
+  display: inline-block;
+  margin-left: .5rem;
+  font-size: .875rem;
+  color: var(--muted);
+  vertical-align: middle;
+}
+
+/* ── Player list ─────────────────────────────────────────── */
+.player-list {
+  list-style: decimal;
+  padding-left: 1.625rem;
+  margin: .875rem 0;
+}
+
+.player-list li {
+  padding: .375rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: .9375rem;
+  line-height: 1.4;
+}
+
+.player-list li:last-child { border-bottom: none; }
+
+/* ── Waitlist ────────────────────────────────────────────── */
+.waitlist {
+  margin-top: 1rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+}
+
+.waitlist h3 {
+  font-size: .8125rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: .5rem;
+}
+
+.waitlist ol {
+  padding-left: 1.25rem;
+  font-size: .9rem;
+}
+
+.waitlist li { padding: .3rem 0; }
+
+/* ── State readonly notice ───────────────────────────────── */
+.state-readonly {
+  margin-top: 1rem;
+  padding: .5rem .75rem;
+  background: #f8f9fa;
+  border-radius: var(--radius-sm);
+  font-style: italic;
+}
+
+/* ── Actions area ────────────────────────────────────────── */
+.actions {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.actions form {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+.actions input[name="guest_name"] {
+  flex: 1;
+  min-width: 130px;
+  min-height: 44px;
+}
+
+.actions button { flex-shrink: 0; }
+
+/* ── Role badge ──────────────────────────────────────────── */
+.role-badge {
+  display: inline-block;
+  padding: .125rem .5rem;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  font-size: .75rem;
+  font-weight: 600;
+  vertical-align: middle;
+  margin-left: .25rem;
+}
+
+/* ── Admin page ──────────────────────────────────────────── */
+.admin-page { max-width: 600px; }
+
+.admin-section {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.admin-section h2 {
+  font-size: .8125rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+  margin-bottom: .875rem;
+}
+
+.current-slot-info {
+  margin-top: .75rem;
+  padding-top: .75rem;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Admin booking list ──────────────────────────────────── */
+.admin-booking-list { list-style: none; }
+
+.admin-booking-list li {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  padding: .45rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: .9375rem;
+}
+
+.admin-booking-list li:last-child { border-bottom: none; }
+
+.booking-status {
+  font-size: .75rem;
+  font-weight: 700;
+  padding: .125rem .4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.booking-status.confirmed { background: #d8f3dc; color: #1b4332; }
+.booking-status.waitlist  { background: #fff3cd; color: #664d03; }
+
+/* ── Admin user list ─────────────────────────────────────── */
+.admin-user-list { list-style: none; }
+
+.admin-user-list li {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  flex-wrap: wrap;
+  padding: .625rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.admin-user-list li:last-child { border-bottom: none; }
+
+.admin-user-list .username {
+  font-weight: 600;
+  min-width: 80px;
+}
+
+.admin-user-list form {
+  flex-direction: row;
+  gap: .25rem;
+  margin: 0;
+}
+
+.admin-user-list input  { width: 72px; min-height: 36px; padding: .3rem .5rem; font-size: .875rem; }
+.admin-user-list select { width: auto; min-height: 36px; padding: .3rem .5rem; font-size: .875rem; }
+.admin-user-list button { min-height: 36px; padding: .3rem .7rem; font-size: .875rem; }
+
+/* ── Links ───────────────────────────────────────────────── */
+a { color: var(--primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Responsive tightening below 375px ──────────────────── */
+@media (max-width: 374px) {
+  main { padding: .75rem; }
+  h1   { font-size: 1.5rem; }
+  .actions form { flex-direction: column; }
+  .admin-user-list li { flex-direction: column; align-items: flex-start; }
+}

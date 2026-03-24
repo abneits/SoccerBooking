@@ -1,0 +1,23 @@
+{% if not current_bookings or (not current_bookings.confirmed and not current_bookings.waitlist) %}
+<p class="muted">No bookings yet.</p>
+{% else %}
+<ul class="admin-booking-list">
+{% for b in current_bookings.confirmed + current_bookings.waitlist %}
+<li>
+  <span class="booking-status {{ b.status }}">{{ b.status }}</span>
+  {% if b.type == "guest" %}
+    {{ b.guest_name }} <span class="muted">(guest, invited by {{ b.booked_by_username }})</span>
+  {% else %}
+    {{ b.booked_by_username }}
+  {% endif %}
+  {% if current_state and current_state.value in ("open", "closed") %}
+  <form method="post" action="/admin/booking/cancel" style="display:inline;margin:0">
+    <input type="hidden" name="booking_id" value="{{ b.id }}">
+    <input type="hidden" name="slot_id" value="{{ current_slot.id }}">
+    <button type="submit" class="danger small">✕</button>
+  </form>
+  {% endif %}
+</li>
+{% endfor %}
+</ul>
+{% endif %}

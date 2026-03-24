@@ -18,11 +18,16 @@ A web app to book a weekly soccer slot. Self-hosted on a local NUC.
 SoccerBooking/
 ├── backend/
 │   ├── main.py           # FastAPI app entry point
-│   ├── routers/          # One file per domain (bookings, users, slots)
-│   ├── models/           # SQLAlchemy models
+│   ├── db.py             # asyncpg pool setup, raw SQL query helpers (no ORM)
+│   ├── config.py         # Settings loaded from env vars
+│   ├── slot_utils.py     # Slot lifecycle logic (compute_slot_state, get_or_create_upcoming_slot)
+│   ├── booking_utils.py  # Booking creation, cancellation, waitlist promotion
+│   ├── webhooks.py       # Fire-and-forget webhook POSTs
+│   ├── scheduler.py      # APScheduler Wednesday 14:00 job
+│   ├── auth.py           # FastAPI dependencies (require_login, require_admin)
+│   ├── routers/          # One file per domain (auth, main, admin, profile)
 │   ├── templates/        # Jinja2 HTML templates
-│   ├── static/           # CSS, icons
-│   └── db.py             # DB session / engine setup
+│   └── static/           # CSS, icons
 ├── docker-compose.yml
 ├── .env.example
 └── CLAUDE.md

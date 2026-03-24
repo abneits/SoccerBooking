@@ -1,0 +1,32 @@
+{% if not users %}
+<p class="muted">No users.</p>
+{% else %}
+<ul class="admin-user-list">
+{% for u in users %}
+<li>
+  <span class="username">{{ u.username }}</span>
+  <span class="role-badge">{{ u.role }}</span>
+
+  <form method="post" action="/admin/user/reset-pin">
+    <input type="hidden" name="user_id" value="{{ u.id }}">
+    <input name="new_pin" placeholder="New PIN" maxlength="4" inputmode="numeric" size="5">
+    <button type="submit">Reset PIN</button>
+  </form>
+
+  <form method="post" action="/admin/user/set-role">
+    <input type="hidden" name="user_id" value="{{ u.id }}">
+    <select name="role">
+      <option value="player" {% if u.role == "player" %}selected{% endif %}>player</option>
+      <option value="admin" {% if u.role == "admin" %}selected{% endif %}>admin</option>
+    </select>
+    <button type="submit">Set Role</button>
+  </form>
+
+  <form method="post" action="/admin/user/delete" onsubmit="return confirm('Delete {{ u.username }}?')">
+    <input type="hidden" name="user_id" value="{{ u.id }}">
+    <button type="submit" class="danger">Delete</button>
+  </form>
+</li>
+{% endfor %}
+</ul>
+{% endif %}

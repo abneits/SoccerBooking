@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="main-page">
+  <header class="page-header">
+    <h1>⚽ Soccer</h1>
+    <nav>
+      {% if user.role == "admin" %}<a href="/admin">Admin</a> · {% endif %}
+      <a href="/profile">Profile</a> · <a href="/logout">Logout</a>
+    </nav>
+  </header>
+  <div id="slot-panel">
+    {% include "partials/slot_panel.html" %}
+  </div>
+</main>
+{% endblock %}
