@@ -22,6 +22,12 @@ class TestCreateBooking:
         bookings = [await _book(slot["id"], u["id"], u["id"]) for u in users]
         assert [b["position"] for b in bookings] == [1, 2, 3]
 
+    async def test_tenth_booking_is_confirmed(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(10)]
+        bookings = [await _book(slot["id"], u["id"], u["id"]) for u in users]
+        assert bookings[9]["status"] == "confirmed"
+
     async def test_eleventh_booking_goes_to_waitlist(self):
         slot = await create_slot("2026-03-25")
         users = [await create_user(f"u{i}") for i in range(11)]
@@ -29,7 +35,13 @@ class TestCreateBooking:
         assert bookings[9]["status"] == "confirmed"
         assert bookings[10]["status"] == "waitlist"
 
-    async def test_max_waitlist_raises(self):
+    async def test_twelfth_booking_goes_to_waitlist(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(12)]
+        bookings = [await _book(slot["id"], u["id"], u["id"]) for u in users]
+        assert bookings[11]["status"] == "waitlist"
+
+    async def test_thirteenth_booking_raises_full(self):
         slot = await create_slot("2026-03-25")
         users = [await create_user(f"u{i}") for i in range(13)]
         for u in users[:12]:
@@ -58,6 +70,38 @@ class TestCreateBooking:
         slot = await create_slot("2026-03-25")
         with pytest.raises(BookingError, match="guest_name"):
             await _book(slot["id"], None, player["id"], "guest", None)
+
+    async def test_player_can_book_self_and_guest(self):
+        player = await create_user("alice")
+        slot = await create_slot("2026-03-25")
+        b1 = await _book(slot["id"], player["id"], player["id"], "player")
+        b2 = await _book(slot["id"], None, player["id"], "guest", "Bob")
+        assert b1["type"] == "player"
+        assert b2["type"] == "guest"
+        count = await db_module.fetch_val("SELECT COUNT(*) FROM bookings")
+        assert count == 2
+
+    async def test_bookings_on_different_slots_are_independent(self):
+        user = await create_user("alice")
+        slot1 = await create_slot("2026-03-25")
+        slot2 = await create_slot("2026-04-01")
+        await _book(slot1["id"], user["id"], user["id"])
+        b2 = await _book(slot2["id"], user["id"], user["id"])
+        assert b2["status"] == "confirmed"
+
+    async def test_booking_has_created_at(self):
+        user = await create_user("alice")
+        slot = await create_slot("2026-03-25")
+        b = await _book(slot["id"], user["id"], user["id"])
+        assert "created_at" in b
+
+    async def test_admin_can_book_for_another_user(self):
+        admin = await create_user("admin", role="admin")
+        player = await create_user("bob")
+        slot = await create_slot("2026-03-25")
+        b = await _book(slot["id"], player["id"], admin["id"])
+        assert b["user_id"] == player["id"]
+        assert b["booked_by_id"] == admin["id"]
 
 
 class TestCancelBooking:
@@ -95,6 +139,33 @@ class TestCancelBooking:
         count = await db_module.fetch_val("SELECT COUNT(*) FROM bookings")
         assert count == 10
 
+    async def test_promotes_lowest_position_waitlist_entry(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(12)]
+        bookings = [await _book(slot["id"], u["id"], u["id"]) for u in users]
+        # u10 (pos 11) and u11 (pos 12) are waitlisted
+        result = await cancel_booking(bookings[0]["id"], slot["id"])
+        # u10 should be promoted (lower position), not u11
+        assert result["promoted"]["id"] == bookings[10]["id"]
+
+    async def test_cancel_guest_booking(self):
+        player = await create_user("alice")
+        slot = await create_slot("2026-03-25")
+        g = await _book(slot["id"], None, player["id"], "guest", "Bob")
+        result = await cancel_booking(g["id"], slot["id"])
+        assert result is None
+        count = await db_module.fetch_val("SELECT COUNT(*) FROM bookings")
+        assert count == 0
+
+    async def test_confirmed_count_after_promotion(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(11)]
+        bookings = [await _book(slot["id"], u["id"], u["id"]) for u in users]
+        await cancel_booking(bookings[0]["id"], slot["id"])
+        result = await get_slot_bookings(slot["id"])
+        assert len(result["confirmed"]) == 10
+        assert len(result["waitlist"]) == 0
+
 
 class TestGetSlotBookings:
     async def test_returns_confirmed_and_waitlist_separated(self):
@@ -105,3 +176,37 @@ class TestGetSlotBookings:
         result = await get_slot_bookings(slot["id"])
         assert len(result["confirmed"]) == 3
         assert len(result["waitlist"]) == 0
+
+    async def test_empty_slot_returns_empty_lists(self):
+        slot = await create_slot("2026-03-25")
+        result = await get_slot_bookings(slot["id"])
+        assert result["confirmed"] == []
+        assert result["waitlist"] == []
+
+    async def test_mixed_confirmed_and_waitlist(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(11)]
+        for u in users:
+            await _book(slot["id"], u["id"], u["id"])
+        result = await get_slot_bookings(slot["id"])
+        assert len(result["confirmed"]) == 10
+        assert len(result["waitlist"]) == 1
+
+    async def test_bookings_ordered_by_position(self):
+        slot = await create_slot("2026-03-25")
+        users = [await create_user(f"u{i}") for i in range(3)]
+        for u in users:
+            await _book(slot["id"], u["id"], u["id"])
+        result = await get_slot_bookings(slot["id"])
+        positions = [b["position"] for b in result["confirmed"]]
+        assert positions == sorted(positions)
+
+    async def test_includes_guest_bookings(self):
+        player = await create_user("alice")
+        slot = await create_slot("2026-03-25")
+        await _book(slot["id"], player["id"], player["id"], "player")
+        await _book(slot["id"], None, player["id"], "guest", "Bob")
+        result = await get_slot_bookings(slot["id"])
+        assert len(result["confirmed"]) == 2
+        types = {b["type"] for b in result["confirmed"]}
+        assert types == {"player", "guest"}
