@@ -1,11 +1,21 @@
+import json
 import asyncpg
 
 _pool: asyncpg.Pool | None = None
 
 
+async def _init_connection(conn):
+    await conn.set_type_codec(
+        "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+    )
+    await conn.set_type_codec(
+        "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+    )
+
+
 async def init_pool(dsn: str) -> None:
     global _pool
-    _pool = await asyncpg.create_pool(dsn)
+    _pool = await asyncpg.create_pool(dsn, init=_init_connection)
 
 
 async def close_pool() -> None:
