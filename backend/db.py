@@ -4,20 +4,17 @@ import asyncpg
 _pool: asyncpg.Pool | None = None
 
 
-async def _init_connection(conn):
-    await conn.set_type_codec(
-        "jsonb", encoder=json.dumps, decoder=json.loads,
-        schema="pg_catalog", format="text",
-    )
-    await conn.set_type_codec(
-        "json", encoder=json.dumps, decoder=json.loads,
-        schema="pg_catalog", format="text",
-    )
+def _decode_row(row: dict) -> dict:
+    """Ensure any JSONB 'data' column is a dict, not a raw string."""
+    result = dict(row)
+    if "data" in result and isinstance(result["data"], str):
+        result["data"] = json.loads(result["data"])
+    return result
 
 
 async def init_pool(dsn: str) -> None:
     global _pool
-    _pool = await asyncpg.create_pool(dsn, init=_init_connection)
+    _pool = await asyncpg.create_pool(dsn)
 
 
 async def close_pool() -> None:
@@ -33,13 +30,13 @@ def get_pool() -> asyncpg.Pool:
 async def fetch_one(query: str, *args) -> dict | None:
     async with get_pool().acquire() as conn:
         row = await conn.fetchrow(query, *args)
-        return dict(row) if row else None
+        return _decode_row(row) if row else None
 
 
 async def fetch_all(query: str, *args) -> list[dict]:
     async with get_pool().acquire() as conn:
         rows = await conn.fetch(query, *args)
-        return [dict(r) for r in rows]
+        return [_decode_row(r) for r in rows]
 
 
 async def execute(query: str, *args) -> str:
