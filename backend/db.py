@@ -6,10 +6,12 @@ _pool: asyncpg.Pool | None = None
 
 async def _init_connection(conn):
     await conn.set_type_codec(
-        "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+        "jsonb", encoder=json.dumps, decoder=json.loads,
+        schema="pg_catalog", format="text",
     )
     await conn.set_type_codec(
-        "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+        "json", encoder=json.dumps, decoder=json.loads,
+        schema="pg_catalog", format="text",
     )
 
 
