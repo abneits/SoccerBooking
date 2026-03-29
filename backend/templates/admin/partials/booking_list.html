@@ -1,12 +1,12 @@
 {% if not current_bookings or (not current_bookings.confirmed and not current_bookings.waitlist) %}
-<p class="muted">No bookings yet.</p>
+<p class="muted">Aucune réservation pour le moment.</p>
 {% else %}
 <ul class="admin-booking-list">
 {% for b in current_bookings.confirmed + current_bookings.waitlist %}
 <li>
   <span class="booking-status {{ b.status }}">{{ b.status }}</span>
   {% if b.type == "guest" %}
-    {{ b.guest_name }} <span class="muted">(guest, invited by {{ b.booked_by_username }})</span>
+    {{ b.guest_name }} <span class="muted">(invité, ajouté par {{ b.booked_by_username }})</span>
   {% else %}
     {{ b.booked_by_username }}
   {% endif %}

@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
 <main class="auth-page">
-  <h1>SoccerBooking</h1>
-  <h2>Register</h2>
+  <h1>Play Arena</h1>
+  <h2>Inscription</h2>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="/register">
-    <input name="username" placeholder="Username" autocomplete="username" required>
-    <input name="pin" type="password" placeholder="PIN (4 digits)" maxlength="4" pattern="\d{4}" inputmode="numeric" autocomplete="new-password" required>
-    <button type="submit">Register</button>
+    <input name="username" placeholder="Nom d'utilisateur" autocomplete="username" required>
+    <input name="pin" type="password" placeholder="PIN (4 chiffres)" maxlength="4" pattern="\d{4}" inputmode="numeric" autocomplete="new-password" required>
+    <button type="submit">S'inscrire</button>
   </form>
-  <p><a href="/login">Already have an account?</a></p>
+  <p><a href="/login">Déjà un compte ?</a></p>
 </main>
 {% endblock %}

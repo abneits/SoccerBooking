@@ -2,20 +2,20 @@
 {% block content %}
 <main class="admin-page">
   <header class="page-header">
-    <h1>Admin Panel</h1>
-    <nav><a href="/">← Home</a> · <a href="/logout">Logout</a></nav>
+    <h1>Panneau d'administration</h1>
+    <nav><a href="/">← Accueil</a> · <a href="/logout">Déconnexion</a></nav>
   </header>
 
   <section class="admin-section">
-    <h2>Slot Management</h2>
+    <h2>Gestion des créneaux</h2>
     <form method="post" action="/admin/slot/cancel">
-      <input type="date" name="date" placeholder="YYYY-MM-DD">
-      <input name="reason" placeholder="Reason (optional)">
-      <button type="submit">Cancel / Pre-cancel by date</button>
+      <input type="date" name="date" placeholder="AAAA-MM-JJ">
+      <input name="reason" placeholder="Raison (optionnel)">
+      <button type="submit">Annuler / Pré-annuler par date</button>
     </form>
     {% if current_slot %}
     <div class="current-slot-info">
-      <p>Current slot: <strong>{{ current_slot.date }}</strong>
+      <p>Créneau actuel : <strong>{{ current_slot.date }}</strong>
          <span class="state-badge state-{{ current_state.value if current_state else current_slot.status }}">
            {{ (current_state.value if current_state else current_slot.status) | upper }}
          </span>
@@ -23,8 +23,8 @@
       {% if current_slot.status != "cancelled" %}
       <form method="post" action="/admin/slot/cancel" style="margin-top:.5rem">
         <input type="hidden" name="slot_id" value="{{ current_slot.id }}">
-        <input name="reason" placeholder="Reason">
-        <button type="submit" class="danger">Cancel this slot</button>
+        <input name="reason" placeholder="Raison">
+        <button type="submit" class="danger">Annuler ce créneau</button>
       </form>
       {% endif %}
     </div>
@@ -33,20 +33,20 @@
 
   {% if current_slot and current_bookings %}
   <section class="admin-section">
-    <h2>Booking Management — {{ current_slot.date }}</h2>
+    <h2>Gestion des réservations — {{ current_slot.date }}</h2>
     {% include "admin/partials/booking_list.html" %}
     {% if current_state and current_state.value in ("open", "closed") %}
     <form method="post" action="/admin/booking/add" style="margin-top:1rem">
       <input type="hidden" name="slot_id" value="{{ current_slot.id }}">
-      <input name="username" placeholder="Username to add">
-      <button type="submit">Add Player</button>
+      <input name="username" placeholder="Nom d'utilisateur à ajouter">
+      <button type="submit">Ajouter un joueur</button>
     </form>
     {% endif %}
   </section>
   {% endif %}
 
   <section class="admin-section">
-    <h2>User Management</h2>
+    <h2>Gestion des utilisateurs</h2>
     {% include "admin/partials/user_list.html" %}
   </section>
 </main>

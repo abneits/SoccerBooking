@@ -1,5 +1,5 @@
 {% if not users %}
-<p class="muted">No users.</p>
+<p class="muted">Aucun utilisateur.</p>
 {% else %}
 <ul class="admin-user-list">
 {% for u in users %}
@@ -9,22 +9,22 @@
 
   <form method="post" action="/admin/user/reset-pin">
     <input type="hidden" name="user_id" value="{{ u.id }}">
-    <input name="new_pin" placeholder="New PIN" maxlength="4" inputmode="numeric" size="5">
-    <button type="submit">Reset PIN</button>
+    <input name="new_pin" placeholder="Nouveau PIN" maxlength="4" inputmode="numeric" size="5">
+    <button type="submit">Réinitialiser le PIN</button>
   </form>
 
   <form method="post" action="/admin/user/set-role">
     <input type="hidden" name="user_id" value="{{ u.id }}">
     <select name="role">
-      <option value="player" {% if u.role == "player" %}selected{% endif %}>player</option>
+      <option value="player" {% if u.role == "player" %}selected{% endif %}>joueur</option>
       <option value="admin" {% if u.role == "admin" %}selected{% endif %}>admin</option>
     </select>
-    <button type="submit">Set Role</button>
+    <button type="submit">Définir le rôle</button>
   </form>
 
-  <form method="post" action="/admin/user/delete" onsubmit="return confirm('Delete {{ u.username }}?')">
+  <form method="post" action="/admin/user/delete" onsubmit="return confirm('Supprimer {{ u.username }} ?')">
     <input type="hidden" name="user_id" value="{{ u.id }}">
-    <button type="submit" class="danger">Delete</button>
+    <button type="submit" class="danger">Supprimer</button>
   </form>
 </li>
 {% endfor %}

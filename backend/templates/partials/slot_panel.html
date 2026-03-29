@@ -1,10 +1,10 @@
 {% if not slot %}
 <section class="slot-card">
-  <p class="muted">No upcoming slot yet. Check back Monday at noon.</p>
+  <p class="muted">Pas encore de créneau à venir. Revenez lundi à midi.</p>
 </section>
 {% elif state.value == "cancelled" %}
 <section class="slot-card cancelled">
-  <h2>{{ slot.date }} — CANCELLED</h2>
+  <h2>{{ slot.date }} — ANNULÉ</h2>
   {% if slot.cancelled_reason %}<p class="muted">{{ slot.cancelled_reason }}</p>{% endif %}
 </section>
 {% else %}
@@ -19,7 +19,7 @@
       {% if i < (bookings.confirmed | length) %}
         {% set b = bookings.confirmed[i] %}
         {% if b.type == "guest" %}
-          {{ b.guest_name }} <span class="muted">(invited by {{ b.booked_by_username }})</span>
+          {{ b.guest_name }} <span class="muted">(invité par {{ b.booked_by_username }})</span>
         {% else %}
           {{ b.booked_by_username }}
         {% endif %}
@@ -32,11 +32,11 @@
 
   {% if bookings.waitlist %}
   <div class="waitlist">
-    <h3>Waitlist</h3>
+    <h3>Liste d'attente</h3>
     <ol>
     {% for b in bookings.waitlist %}
       <li>
-        {% if b.type == "guest" %}{{ b.guest_name }} <span class="muted">(invited by {{ b.booked_by_username }})</span>
+        {% if b.type == "guest" %}{{ b.guest_name }} <span class="muted">(invité par {{ b.booked_by_username }})</span>
         {% else %}{{ b.booked_by_username }}{% endif %}
       </li>
     {% endfor %}
@@ -53,13 +53,13 @@
     <form hx-post="/book" hx-target="#slot-panel" hx-swap="innerHTML">
       <input type="hidden" name="slot_id" value="{{ slot.id }}">
       <input type="hidden" name="type" value="player">
-      <button type="submit">Book my spot</button>
+      <button type="submit">Réserver ma place</button>
     </form>
     {% else %}
     <form hx-post="/cancel" hx-target="#slot-panel" hx-swap="innerHTML">
       <input type="hidden" name="booking_id" value="{{ my_player_bookings[0].id }}">
       <input type="hidden" name="slot_id" value="{{ slot.id }}">
-      <button type="submit" class="danger">Cancel my spot</button>
+      <button type="submit" class="danger">Annuler ma place</button>
     </form>
     {% endif %}
 
@@ -67,21 +67,21 @@
     <form hx-post="/book" hx-target="#slot-panel" hx-swap="innerHTML">
       <input type="hidden" name="slot_id" value="{{ slot.id }}">
       <input type="hidden" name="type" value="guest">
-      <input name="guest_name" placeholder="Guest name" required>
-      <button type="submit">Add a guest</button>
+      <input name="guest_name" placeholder="Nom de l'invité" required>
+      <button type="submit">Ajouter un invité</button>
     </form>
     {% else %}
     <form hx-post="/cancel" hx-target="#slot-panel" hx-swap="innerHTML">
       <input type="hidden" name="booking_id" value="{{ my_guest_bookings[0].id }}">
       <input type="hidden" name="slot_id" value="{{ slot.id }}">
-      <button type="submit" class="danger">Cancel my guest</button>
+      <button type="submit" class="danger">Annuler mon invité</button>
     </form>
     {% endif %}
   </div>
   {% else %}
   <p class="muted state-readonly">
-    {% if state.value == "closed" %}Booking closed — match starts soon.
-    {% elif state.value == "frozen" %}Results are locked.
+    {% if state.value == "closed" %}Réservations fermées — le match commence bientôt.
+    {% elif state.value == "frozen" %}Les résultats sont verrouillés.
     {% endif %}
   </p>
   {% endif %}
