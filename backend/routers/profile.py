@@ -11,7 +11,7 @@ templates = Jinja2Templates(directory="backend/templates")
 
 @router.get("/profile")
 async def profile_get(request: Request, user: dict = Depends(require_login)):
-    return templates.TemplateResponse("profile.html", {"request": request, "user": user})
+    return templates.TemplateResponse(request, "profile.html", {"user": user})
 
 
 @router.post("/profile/pin")
@@ -32,8 +32,8 @@ async def profile_change_pin(
 
     if error:
         return templates.TemplateResponse(
-            "profile.html",
-            {"request": request, "user": user, "error": error},
+            request, "profile.html",
+            {"user": user, "error": error},
             status_code=400,
         )
 
@@ -46,9 +46,8 @@ async def profile_change_pin(
         user["id"],
     )
     return templates.TemplateResponse(
-        "profile.html",
+        request, "profile.html",
         {
-            "request": request,
             "user": {**user, "pin": new_pin},
             "success": "PIN updated successfully.",
         },

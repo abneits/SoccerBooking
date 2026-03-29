@@ -12,7 +12,7 @@ templates = Jinja2Templates(directory="backend/templates")
 
 @router.get("/register")
 async def register_get(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    return templates.TemplateResponse(request, "register.html")
 
 
 @router.post("/register")
@@ -35,13 +35,13 @@ async def register_post(request: Request, username: str = Form(...), pin: str = 
         except asyncpg.UniqueViolationError:
             error = "Username already taken."
     return templates.TemplateResponse(
-        "register.html", {"request": request, "error": error}, status_code=400
+        request, "register.html", {"error": error}, status_code=400
     )
 
 
 @router.get("/login")
 async def login_get(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+    return templates.TemplateResponse(request, "login.html")
 
 
 @router.post("/login")
@@ -51,8 +51,8 @@ async def login_post(request: Request, username: str = Form(...), pin: str = For
     )
     if not row or row["data"]["pin"] != pin:
         return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid credentials."},
+            request, "login.html",
+            {"error": "Invalid credentials."},
             status_code=401,
         )
     request.session["user_id"] = row["id"]

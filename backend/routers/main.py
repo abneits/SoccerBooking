@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
@@ -23,13 +22,13 @@ def _now() -> datetime:
 async def index(request: Request, user: dict = Depends(require_login)):
     now = _now()
     slot = await get_or_create_upcoming_slot(now)
-    context = {"request": request, "user": user, "slot": None, "bookings": None, "state": None}
+    context = {"user": user, "slot": None, "bookings": None, "state": None}
     if slot:
         state = compute_slot_state(slot, now)
         slot_bookings = await get_slot_bookings(slot["id"])
         bookings = await _enrich_bookings(slot_bookings)
         context.update({"slot": slot, "state": state, "bookings": bookings})
-    return templates.TemplateResponse("index.html", context)
+    return templates.TemplateResponse(request, "index.html", context)
 
 
 @router.post("/book")
@@ -61,8 +60,8 @@ async def book(
     slot_bookings = await get_slot_bookings(slot_id)
     enriched = await _enrich_bookings(slot_bookings)
     return templates.TemplateResponse(
-        "partials/slot_panel.html",
-        {"request": request, "user": user, "slot": slot, "state": state, "bookings": enriched},
+        request, "partials/slot_panel.html",
+        {"user": user, "slot": slot, "state": state, "bookings": enriched},
     )
 
 
@@ -107,8 +106,8 @@ async def cancel(
     slot_bookings = await get_slot_bookings(slot_id)
     enriched = await _enrich_bookings(slot_bookings)
     return templates.TemplateResponse(
-        "partials/slot_panel.html",
-        {"request": request, "user": user, "slot": slot, "state": state, "bookings": enriched},
+        request, "partials/slot_panel.html",
+        {"user": user, "slot": slot, "state": state, "bookings": enriched},
     )
 
 

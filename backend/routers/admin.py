@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, date as date_type
+from datetime import datetime
 from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
 from fastapi.responses import RedirectResponse
@@ -53,8 +53,7 @@ async def admin_index(request: Request, user: dict = Depends(require_admin)):
             "waitlist": [enrich(b) for b in raw_bookings["waitlist"]],
         }
 
-    return templates.TemplateResponse("admin/index.html", {
-        "request": request,
+    return templates.TemplateResponse(request, "admin/index.html", {
         "user": user,
         "slots": slot_list,
         "current_slot": current_slot,
