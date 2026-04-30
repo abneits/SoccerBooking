@@ -23,7 +23,7 @@ APP_URL = os.environ.get("APP_URL", "http://localhost:8009").rstrip("/")
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 
-# ── Database pool (function-scoped to avoid event loop conflicts) ─────────────
+# ── JSONB codec ───────────────────────────────────────────────────────────────
 
 async def _init_conn(conn):
     """Register JSONB codec so asyncpg returns dicts instead of raw strings."""
@@ -36,22 +36,21 @@ async def _init_conn(conn):
     )
 
 
-@pytest.fixture
-async def db_pool():
-    """Fresh asyncpg pool per test — avoids cross-loop Future errors."""
-    pool = await asyncpg.create_pool(DATABASE_URL, init=_init_conn)
-    yield pool
-    await pool.close()
-
+# ── Database pool — single instance per test via autouse ─────────────────────
 
 @pytest.fixture(autouse=True)
-async def reset_db(db_pool):
-    """Truncate all tables before every test — full isolation."""
-    async with db_pool.acquire() as conn:
+async def db_pool():
+    """Fresh asyncpg pool per test, shared by all fixtures via autouse.
+    Truncates all tables before yielding — guarantees clean state before
+    any test fixture (admin_client, player_client, etc.) seeds data.
+    """
+    pool = await asyncpg.create_pool(DATABASE_URL, init=_init_conn)
+    async with pool.acquire() as conn:
         await conn.execute(
             "TRUNCATE bookings, slots, users RESTART IDENTITY CASCADE"
         )
-    yield
+    yield pool
+    await pool.close()
 
 
 # ── HTTP client ───────────────────────────────────────────────────────────────
@@ -65,7 +64,7 @@ async def client():
 
 @pytest.fixture
 async def admin_client(db_pool):
-    """Authenticated admin client, ready to use."""
+    """Authenticated admin client — user created after DB is already clean."""
     from tests.helpers import db_create_user, api_login
     async with httpx.AsyncClient(base_url=APP_URL, follow_redirects=False) as c:
         await db_create_user(db_pool, "testadmin", pin="0000", role="admin")
@@ -75,7 +74,7 @@ async def admin_client(db_pool):
 
 @pytest.fixture
 async def player_client(db_pool):
-    """Authenticated player client, ready to use."""
+    """Authenticated player client — user created after DB is already clean."""
     from tests.helpers import db_create_user, api_login
     async with httpx.AsyncClient(base_url=APP_URL, follow_redirects=False) as c:
         await db_create_user(db_pool, "testplayer", pin="1111", role="player")
