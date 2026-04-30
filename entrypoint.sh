@@ -1,13 +1,15 @@
 #!/bin/sh
 set -e
 
-# Extract host and user from DATABASE_URL
-# Format: postgresql://user:password@host:port/dbname
-DB_HOST=$(echo "$DATABASE_URL" | sed 's|.*@\(.*\):\([0-9]*\)/.*|\1|')
-DB_USER=$(echo "$DATABASE_URL" | sed 's|.*://\([^:]*\):.*|\1|')
-
 echo "Waiting for PostgreSQL to be ready..."
-until pg_isready -h "$DB_HOST" -U "$DB_USER" > /dev/null 2>&1; do
+until python3 -c "
+import psycopg2, os, sys
+try:
+    psycopg2.connect(os.environ['DATABASE_URL']).close()
+    sys.exit(0)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; do
   sleep 1
 done
 echo "PostgreSQL is ready."
