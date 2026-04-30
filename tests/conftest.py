@@ -26,10 +26,11 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 # ── JSONB codec ───────────────────────────────────────────────────────────────
 
 async def _init_conn(conn):
-    """Register JSONB codec so asyncpg returns dicts instead of raw strings."""
+    """Register JSONB decoder so asyncpg returns dicts instead of raw strings.
+    No encoder — we pass data as pre-serialized strings with ::jsonb cast."""
     await conn.set_type_codec(
         "jsonb",
-        encoder=json.dumps,
+        encoder=str,      # identity — we never send dict params, always json.dumps strings
         decoder=json.loads,
         schema="pg_catalog",
         format="text",
