@@ -1,15 +1,11 @@
-import json
 import asyncpg
 
 _pool: asyncpg.Pool | None = None
 
 
-def _decode_row(row: dict) -> dict:
-    """Ensure any JSONB 'data' column is a dict, not a raw string."""
-    result = dict(row)
-    if "data" in result and isinstance(result["data"], str):
-        result["data"] = json.loads(result["data"])
-    return result
+def _decode_row(row) -> dict:
+    """Convert an asyncpg Record to a plain dict."""
+    return dict(row)
 
 
 async def init_pool(dsn: str) -> None:

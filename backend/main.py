@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from backend.config import DATABASE_URL, SECRET_KEY, SESSION_MAX_AGE
+from backend.config import DATABASE_URL, SECRET_KEY, SESSION_MAX_AGE, TESTING
 from backend import db as db_module
 from backend.routers import auth as auth_router
 from backend.routers import main as main_router
@@ -29,3 +29,7 @@ app.include_router(auth_router.router)
 app.include_router(main_router.router)
 app.include_router(admin_router.router)
 app.include_router(profile_router.router)
+
+if TESTING:
+    from backend.routers import internal as internal_router
+    app.include_router(internal_router.router)

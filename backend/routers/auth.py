@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -27,7 +27,7 @@ async def register_post(request: Request, username: str = Form(...), pin: str = 
             "username": username.strip(),
             "pin": pin,
             "role": "player",
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
         })
         try:
             await db_module.execute("INSERT INTO users (data) VALUES ($1::jsonb)", data)

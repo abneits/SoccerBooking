@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from backend import db as db_module
 
 
@@ -75,13 +75,14 @@ async def create_booking(
                 "guest_name": guest_name,
                 "status": status,
                 "position": position,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(timezone.utc).isoformat(),
             }
             row = await conn.fetchrow(
                 "INSERT INTO bookings (data) VALUES ($1::jsonb) RETURNING id, data",
                 json.dumps(data),
             )
-            return {"id": row["id"], **row["data"]}
+            rdata = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
+            return {"id": row["id"], **rdata}
 
 
 async def cancel_booking(booking_id: int, slot_id: int) -> dict | None:
@@ -100,7 +101,7 @@ async def cancel_booking(booking_id: int, slot_id: int) -> dict | None:
             if not row:
                 return None
 
-            booking = dict(row["data"])
+            booking = row["data"] if isinstance(row["data"], dict) else json.loads(row["data"])
             was_confirmed = booking["status"] == "confirmed"
 
             await conn.execute("DELETE FROM bookings WHERE id = $1", booking_id)
@@ -113,7 +114,7 @@ async def cancel_booking(booking_id: int, slot_id: int) -> dict | None:
                     slot_id,
                 )
                 if waitlist_row:
-                    updated = dict(waitlist_row["data"])
+                    updated = waitlist_row["data"] if isinstance(waitlist_row["data"], dict) else json.loads(waitlist_row["data"])
                     updated["status"] = "confirmed"
                     await conn.execute(
                         "UPDATE bookings SET data = $1::jsonb WHERE id = $2",

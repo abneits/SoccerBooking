@@ -93,4 +93,6 @@ async def get_or_create_upcoming_slot(now: datetime) -> dict | None:
         row = await db_module.fetch_one(
             "SELECT id, data FROM slots WHERE data->>'date' = $1", date_str
         )
+        if row is None:
+            return None
         return {"id": row["id"], **row["data"]}

@@ -1,11 +1,11 @@
 import logging
-from datetime import date
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from backend.config import TIMEZONE
+from backend.time_override import get_now
 
 _scheduler: AsyncIOScheduler | None = None
 logger = logging.getLogger(__name__)
@@ -17,8 +17,7 @@ async def _nudge_job() -> None:
     from backend import db as db_module
     from backend.webhooks import fire_slot_not_full
 
-    tz = ZoneInfo(TIMEZONE)
-    today = date.today()
+    today = get_now().date()
 
     # Guard: only run on Wednesdays (cron should handle this, but be safe)
     if today.weekday() != 2:

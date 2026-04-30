@@ -1,10 +1,9 @@
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
 
 from backend.auth import require_login
-from backend.config import TIMEZONE
+from backend.time_override import get_now as _now
 from backend.slot_utils import get_or_create_upcoming_slot, compute_slot_state, SlotState
 from backend.booking_utils import create_booking, cancel_booking, get_slot_bookings, BookingError
 from backend.webhooks import fire_waitlist_promoted
@@ -12,10 +11,6 @@ from backend import db as db_module
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/templates")
-
-
-def _now() -> datetime:
-    return datetime.now(ZoneInfo(TIMEZONE))
 
 
 @router.get("/")
@@ -112,17 +107,31 @@ async def cancel(
 
 
 async def _enrich_bookings(slot_bookings: dict) -> dict:
-    """Resolve booked_by_username for display."""
+    """Resolve booked_by_username and player_username for display."""
     all_bookings = slot_bookings["confirmed"] + slot_bookings["waitlist"]
-    user_ids = list({b["booked_by_id"] for b in all_bookings if b.get("booked_by_id")})
+
+    # Collect all user IDs that need resolving (booker + actual player)
+    all_ids = set()
+    for b in all_bookings:
+        if b.get("booked_by_id"):
+            all_ids.add(b["booked_by_id"])
+        if b.get("user_id"):
+            all_ids.add(b["user_id"])
+
     users = {}
-    for uid in user_ids:
+    for uid in all_ids:
         row = await db_module.fetch_one("SELECT id, data FROM users WHERE id = $1", uid)
         if row:
             users[uid] = row["data"]["username"]
 
     def enrich(b):
-        return {**b, "booked_by_username": users.get(b.get("booked_by_id"), "?")}
+        booked_by_username = users.get(b.get("booked_by_id"), "?")
+        # For player bookings, show the actual player; for guest bookings show the booker
+        if b.get("type") == "player":
+            player_username = users.get(b.get("user_id"), booked_by_username)
+        else:
+            player_username = None
+        return {**b, "booked_by_username": booked_by_username, "player_username": player_username}
 
     return {
         "confirmed": [enrich(b) for b in slot_bookings["confirmed"]],

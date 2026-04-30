@@ -1,12 +1,11 @@
 import json
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from backend.auth import require_admin
-from backend.config import TIMEZONE
+from backend.time_override import get_now as _now
 from backend.slot_utils import compute_slot_state, SlotState
 from backend.booking_utils import create_booking, cancel_booking, get_slot_bookings, BookingError
 from backend.webhooks import fire_waitlist_promoted
@@ -14,10 +13,6 @@ from backend import db as db_module
 
 router = APIRouter(prefix="/admin")
 templates = Jinja2Templates(directory="backend/templates")
-
-
-def _now() -> datetime:
-    return datetime.now(ZoneInfo(TIMEZONE))
 
 
 @router.get("")
@@ -31,8 +26,12 @@ async def admin_index(request: Request, user: dict = Depends(require_admin)):
     users = await db_module.fetch_all("SELECT id, data FROM users ORDER BY id")
     user_list = [{"id": r["id"], **r["data"]} for r in users]
 
-    # Find the most recent non-future slot or the upcoming one for booking management
-    current_slot = slot_list[0] if slot_list else None
+    # Find the upcoming slot (date >= today); fall back to the most recent past slot
+    today_str = now.date().isoformat()
+    current_slot = next(
+        (s for s in reversed(slot_list) if s["date"] >= today_str),
+        slot_list[0] if slot_list else None,
+    )
     current_bookings = None
     current_state = None
     if current_slot:
@@ -191,9 +190,11 @@ async def admin_delete_user(
     user_id: int = Form(...),
     user: dict = Depends(require_admin),
 ):
-    # Cascade-delete bookings on open slots, with waitlist promotion
+    if user_id == user["id"]:
+        raise HTTPException(400, "Cannot delete your own account")
+    # Cascade-delete bookings on active (open or closed) slots, with waitlist promotion
     open_slots = await db_module.fetch_all(
-        "SELECT id, data FROM slots WHERE data->>'status' = 'open'"
+        "SELECT id, data FROM slots WHERE data->>'status' IN ('open', 'closed')"
     )
     for slot_row in open_slots:
         slot_id = slot_row["id"]
@@ -234,6 +235,8 @@ async def admin_set_role(
 ):
     if role not in ("player", "admin"):
         raise HTTPException(400, "Role must be 'player' or 'admin'")
+    if user_id == user["id"]:
+        raise HTTPException(400, "Cannot change your own role")
     row = await db_module.fetch_one("SELECT data FROM users WHERE id = $1", user_id)
     if not row:
         raise HTTPException(404)

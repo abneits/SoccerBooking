@@ -9,7 +9,7 @@
 
   <form method="post" action="/admin/user/reset-pin">
     <input type="hidden" name="user_id" value="{{ u.id }}">
-    <input name="new_pin" placeholder="Nouveau PIN" maxlength="4" inputmode="numeric" size="5">
+    <input type="password" name="new_pin" placeholder="Nouveau PIN" maxlength="4" inputmode="numeric" size="5">
     <button type="submit">Réinitialiser le PIN</button>
   </form>
 
@@ -22,7 +22,7 @@
     <button type="submit">Définir le rôle</button>
   </form>
 
-  <form method="post" action="/admin/user/delete" onsubmit="return confirm('Supprimer {{ u.username }} ?')">
+  <form method="post" action="/admin/user/delete" onsubmit="return confirm('Supprimer ' + {{ u.username | tojson }} + ' ?')">
     <input type="hidden" name="user_id" value="{{ u.id }}">
     <button type="submit" class="danger">Supprimer</button>
   </form>
