@@ -241,12 +241,14 @@ class TestUserManagementUI:
 
     async def test_delete_user_confirm_dialog_fired(self, page, db_pool):
         """Clicking delete triggers a JS confirm dialog."""
-        await db_create_user(db_pool, "to_delete", pin="1234")
+        target = await db_create_user(db_pool, "to_delete", pin="1234")
         await ui_login_admin(page, db_pool)
 
+        # Target the delete form for "to_delete" specifically (avoid matching
+        # the admin's own delete button, which may be hidden or behave differently)
         delete_btn = page.locator(
-            'form[action="/admin/user/delete"] button'
-        ).first
+            f'form[action="/admin/user/delete"]:has(input[value="{target["id"]}"]) button[type="submit"]'
+        )
 
         async with page.expect_event("dialog") as dialog_info:
             await delete_btn.click()
@@ -255,12 +257,12 @@ class TestUserManagementUI:
         await dialog.dismiss()
 
     async def test_confirm_dialog_contains_username(self, page, db_pool):
-        await db_create_user(db_pool, "named_user", pin="1234")
+        target = await db_create_user(db_pool, "named_user", pin="1234")
         await ui_login_admin(page, db_pool)
 
         delete_btn = page.locator(
-            'form[action="/admin/user/delete"] button:has-text("Supprimer")'
-        ).first
+            f'form[action="/admin/user/delete"]:has(input[value="{target["id"]}"]) button[type="submit"]'
+        )
 
         async with page.expect_event("dialog") as dialog_info:
             await delete_btn.click()
