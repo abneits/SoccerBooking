@@ -23,28 +23,25 @@ APP_URL = os.environ.get("APP_URL", "http://localhost:8009").rstrip("/")
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 
-# ── JSONB codec ───────────────────────────────────────────────────────────────
+# ── Database pool ─────────────────────────────────────────────────────────────
 
 async def _init_conn(conn):
-    """Register JSONB decoder so asyncpg returns dicts instead of raw strings.
-    No encoder — we pass data as pre-serialized strings with ::jsonb cast."""
+    """Decode JSONB columns to Python dicts on read.
+    We never pass dicts as parameters — we always use json.dumps + ::jsonb cast —
+    so no encoder is needed and double-encoding is impossible.
+    """
     await conn.set_type_codec(
         "jsonb",
-        encoder=str,      # identity — we never send dict params, always json.dumps strings
+        encoder=json.dumps,
         decoder=json.loads,
         schema="pg_catalog",
         format="text",
     )
 
 
-# ── Database pool — single instance per test via autouse ─────────────────────
-
 @pytest.fixture(autouse=True)
 async def db_pool():
-    """Fresh asyncpg pool per test, shared by all fixtures via autouse.
-    Truncates all tables before yielding — guarantees clean state before
-    any test fixture (admin_client, player_client, etc.) seeds data.
-    """
+    """Fresh asyncpg pool per test. Truncates before yielding."""
     pool = await asyncpg.create_pool(DATABASE_URL, init=_init_conn)
     async with pool.acquire() as conn:
         await conn.execute(
@@ -58,14 +55,12 @@ async def db_pool():
 
 @pytest.fixture
 async def client():
-    """Fresh httpx client per test. Does NOT follow redirects by default."""
     async with httpx.AsyncClient(base_url=APP_URL, follow_redirects=False) as c:
         yield c
 
 
 @pytest.fixture
 async def admin_client(db_pool):
-    """Authenticated admin client — user created after DB is already clean."""
     from tests.helpers import db_create_user, api_login
     async with httpx.AsyncClient(base_url=APP_URL, follow_redirects=False) as c:
         await db_create_user(db_pool, "testadmin", pin="0000", role="admin")
@@ -75,7 +70,6 @@ async def admin_client(db_pool):
 
 @pytest.fixture
 async def player_client(db_pool):
-    """Authenticated player client — user created after DB is already clean."""
     from tests.helpers import db_create_user, api_login
     async with httpx.AsyncClient(base_url=APP_URL, follow_redirects=False) as c:
         await db_create_user(db_pool, "testplayer", pin="1111", role="player")
@@ -95,7 +89,6 @@ async def browser():
 
 @pytest.fixture
 async def page(browser):
-    """Fresh browser page per test."""
     ctx = await browser.new_context(base_url=APP_URL)
     p = await ctx.new_page()
     p.set_default_navigation_timeout(10000)

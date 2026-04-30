@@ -51,14 +51,14 @@ async def db_create_user(
     pin: str = "1234",
     role: str = "player",
 ) -> dict:
-    data = json.dumps({
+    data = {
         "username": username,
         "pin": pin,
         "role": role,
         "created_at": datetime.now(timezone.utc).isoformat(),
-    })
+    }
     row = await pool.fetchrow(
-        "INSERT INTO users (data) VALUES ($1::jsonb) RETURNING id, data", data
+        "INSERT INTO users (data) VALUES ($1) RETURNING id, data", data
     )
     return {"id": row["id"], **_data(row)}
 
@@ -69,15 +69,15 @@ async def db_create_slot(
     status: str = "open",
     cancelled_reason: Optional[str] = None,
 ) -> dict:
-    data = json.dumps({
+    data = {
         "date": date,
         "status": status,
         "cancelled_reason": cancelled_reason,
         "nudge_sent": False,
         "details": {},
-    })
+    }
     row = await pool.fetchrow(
-        "INSERT INTO slots (data) VALUES ($1::jsonb) RETURNING id, data", data
+        "INSERT INTO slots (data) VALUES ($1) RETURNING id, data", data
     )
     return {"id": row["id"], **_data(row)}
 
@@ -98,7 +98,7 @@ async def db_create_booking(
             "FROM bookings WHERE (data->>'slot_id')::int = $1",
             slot_id,
         )
-    data = json.dumps({
+    data = {
         "slot_id": slot_id,
         "user_id": user_id,
         "booked_by_id": booked_by_id,
@@ -107,9 +107,9 @@ async def db_create_booking(
         "status": status,
         "position": position,
         "created_at": datetime.now(timezone.utc).isoformat(),
-    })
+    }
     row = await pool.fetchrow(
-        "INSERT INTO bookings (data) VALUES ($1::jsonb) RETURNING id, data", data
+        "INSERT INTO bookings (data) VALUES ($1) RETURNING id, data", data
     )
     return {"id": row["id"], **_data(row)}
 
