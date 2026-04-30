@@ -9,7 +9,6 @@ The DB is truncated before every test for full isolation.
 The app itself is never imported — all interactions go through HTTP or raw SQL.
 """
 
-import asyncio
 import os
 
 import asyncpg
@@ -21,15 +20,6 @@ from playwright.async_api import async_playwright
 
 APP_URL = os.environ.get("APP_URL", "http://localhost:8008").rstrip("/")
 DATABASE_URL = os.environ["DATABASE_URL"]
-
-
-# ── Event loop ────────────────────────────────────────────────────────────────
-
-@pytest.fixture(scope="session")
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
 
 
 # ── Database pool ─────────────────────────────────────────────────────────────
