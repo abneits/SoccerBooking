@@ -45,7 +45,8 @@ class TestHomePage:
         await db_create_user(db_pool, "alice")
         await db_create_slot(db_pool, TEST_WEDNESDAY)
         await api_login(client, "alice")
-        r = await client.get("/")
+        async with at_time(client, OPEN_TIME):
+            r = await client.get("/")
         assert TEST_WEDNESDAY.encode() in r.content
 
     async def test_no_slot_message_before_monday_noon(self, client, db_pool):
@@ -54,7 +55,8 @@ class TestHomePage:
         async with at_time(client, PRE_OPEN_TIME):
             r = await client.get("/")
         assert r.status_code == 200
-        assert b"lundi" in r.content.lower() or b"pas encore" in r.content or "créneau".encode() in r.content.lower()
+        text = r.text.lower()
+        assert "lundi" in text or "pas encore" in text or "créneau" in text, f"No-slot message not found in response"
 
     async def test_slot_created_after_monday_noon(self, client, db_pool):
         """get_or_create_upcoming_slot creates slot at Monday noon."""
@@ -63,7 +65,7 @@ class TestHomePage:
         async with at_time(client, OPEN_TIME):
             r = await client.get("/")
         assert r.status_code == 200
-        assert TEST_WEDNESDAY.encode() in r.content
+        assert TEST_WEDNESDAY in r.text
 
     async def test_cancelled_slot_shown(self, client, db_pool):
         await db_create_user(db_pool, "alice")
@@ -71,7 +73,7 @@ class TestHomePage:
         await api_login(client, "alice")
         async with at_time(client, OPEN_TIME):
             r = await client.get("/")
-        assert b"ANNUL" in r.content or b"annul" in r.content.lower()
+        assert "annul" in r.text.lower()
 
     async def test_booking_list_shows_player(self, client, db_pool):
         user = await db_create_user(db_pool, "alice")
@@ -80,7 +82,7 @@ class TestHomePage:
         await api_login(client, "alice")
         async with at_time(client, OPEN_TIME):
             r = await client.get("/")
-        assert b"alice" in r.content
+        assert "alice" in r.text
 
     async def test_admin_sees_admin_link(self, client, db_pool):
         await db_create_user(db_pool, "boss", role="admin")
@@ -108,7 +110,7 @@ class TestHomePage:
         await api_login(client, "alice")
         async with at_time(client, CLOSED_TIME):
             r = await client.get("/")
-        assert b"CLOSED" in r.content or b"closed" in r.content
+        assert "closed" in r.text.lower()
 
     async def test_frozen_state_badge_shown(self, client, db_pool):
         await db_create_user(db_pool, "alice")
@@ -116,7 +118,7 @@ class TestHomePage:
         await api_login(client, "alice")
         async with at_time(client, FROZEN_TIME):
             r = await client.get("/")
-        assert b"FROZEN" in r.content or b"frozen" in r.content
+        assert "frozen" in r.text.lower()
 
     async def test_waitlist_shown_when_slot_full(self, client, db_pool):
         await db_create_user(db_pool, "alice")
@@ -125,7 +127,8 @@ class TestHomePage:
         await api_login(client, "alice")
         async with at_time(client, OPEN_TIME):
             r = await client.get("/")
-        assert b"attente" in r.content.lower() or b"waitlist" in r.content.lower()
+        text = r.text.lower()
+        assert "attente" in text or "waitlist" in text
 
 
 class TestBookEndpoint:
@@ -386,9 +389,9 @@ class TestInternalTimeEndpoint:
     async def test_set_time_overrides_clock(self, client):
         async with at_time(client, OPEN_TIME):
             r = await client.get("/internal/now")
-        data = r.json()
-        # After reset, overridden should be False
-        assert data["overridden"] is False
+            data = r.json()
+            # Inside context, overridden should be True
+            assert data["overridden"] is True
 
     async def test_set_time_with_invalid_iso_returns_400(self, client):
         r = await client.post("/internal/set-time", json={"iso": "not-a-date"})

@@ -239,7 +239,7 @@ class TestAdminAddBooking:
         assert all_b[0]["booked_by_id"] != bob["id"]
 
     async def test_add_goes_to_waitlist_when_confirmed_full(self, admin_client, db_pool):
-        await db_create_user(db_pool, "bob")
+        bob = await db_create_user(db_pool, "bob")
         slot = await db_create_slot(db_pool, TEST_WEDNESDAY)
         await db_fill_slot(db_pool, slot["id"], confirmed=10)
         async with at_time(admin_client, OPEN_TIME):
@@ -249,10 +249,8 @@ class TestAdminAddBooking:
             )
         assert r.status_code == 303
         all_b = await db_fetch_bookings(db_pool, slot["id"])
-        bob_booking = next(b for b in all_b if b["user_id"] is not None and
-                          await db_pool.fetchval(
-                              "SELECT data->>'username' FROM users WHERE id = $1", b["user_id"]
-                          ) == "bob")
+        bob_booking = next((b for b in all_b if b.get("user_id") == bob["id"]), None)
+        assert bob_booking is not None, "Bob's booking not found"
         assert bob_booking["status"] == "waitlist"
 
     async def test_non_admin_cannot_add(self, player_client, db_pool):

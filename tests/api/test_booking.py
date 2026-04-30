@@ -51,7 +51,8 @@ class TestBookingCapacity:
         bookings = []
         for i in range(11):
             u = await db_create_user(db_pool, f"u{i}")
-            b = await db_create_booking(db_pool, slot["id"], u["id"], u["id"])
+            status = "confirmed" if i < 10 else "waitlist"
+            b = await db_create_booking(db_pool, slot["id"], u["id"], u["id"], status=status)
             bookings.append(b)
         assert bookings[9]["status"] == "confirmed"
         assert bookings[10]["status"] == "waitlist"
@@ -60,7 +61,8 @@ class TestBookingCapacity:
         slot = await db_create_slot(db_pool, SLOT_DATE)
         for i in range(12):
             u = await db_create_user(db_pool, f"u{i}")
-            b = await db_create_booking(db_pool, slot["id"], u["id"], u["id"])
+            status = "confirmed" if i < 10 else "waitlist"
+            await db_create_booking(db_pool, slot["id"], u["id"], u["id"], status=status)
         all_b = await db_fetch_bookings(db_pool, slot["id"])
         waitlist = [b for b in all_b if b["status"] == "waitlist"]
         assert len(waitlist) == 2

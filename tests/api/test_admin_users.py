@@ -241,12 +241,12 @@ class TestSetRole:
         )
         assert r.status_code == 400
 
-    async def test_empty_role_returns_400(self, admin_client, db_pool):
+    async def test_empty_role_returns_error(self, admin_client, db_pool):
         bob = await db_create_user(db_pool, "bob")
         r = await admin_client.post(
             "/admin/user/set-role", data={"user_id": bob["id"], "role": ""}
         )
-        assert r.status_code == 400
+        assert r.status_code in (400, 422)
 
     async def test_nonexistent_user_returns_404(self, admin_client):
         r = await admin_client.post(

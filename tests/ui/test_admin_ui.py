@@ -29,8 +29,8 @@ async def ui_login_admin(page, db_pool):
 
 class TestAdminAccessUI:
     async def test_unauthenticated_redirected_to_login(self, page):
-        await page.goto("/admin")
-        await page.wait_for_url("**/login**", timeout=5000)
+        resp = await page.goto("/admin")
+        await page.wait_for_load_state("networkidle")
         assert "/login" in page.url
 
     async def test_player_redirected_to_home(self, page, db_pool):
