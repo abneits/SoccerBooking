@@ -68,22 +68,20 @@ async def player_client(db_pool):
         yield c
 
 
-# ── Playwright browser (session-scoped, headless) ────────────────────────────
-
-@pytest.fixture(scope="session")
-async def browser():
-    async with async_playwright() as pw:
-        b = await pw.chromium.launch(headless=True)
-        yield b
-        await b.close()
-
+# ── Playwright (function-scoped to share event loop with other fixtures) ────
 
 @pytest.fixture
-async def page(browser):
-    ctx = await browser.new_context(base_url=APP_URL)
-    p = await ctx.new_page()
-    p.set_default_navigation_timeout(10000)
-    p.set_default_timeout(10000)
-    yield p
-    await p.close()
-    await ctx.close()
+async def page():
+    """Fresh browser + page per test.
+    Function-scoped to share the event loop with db_pool — session-scoped
+    Playwright fixtures conflict with per-test fixtures under pytest-asyncio.
+    """
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        ctx = await browser.new_context(base_url=APP_URL)
+        p = await ctx.new_page()
+        p.set_default_navigation_timeout(10000)
+        p.set_default_timeout(10000)
+        yield p
+        await ctx.close()
+        await browser.close()
