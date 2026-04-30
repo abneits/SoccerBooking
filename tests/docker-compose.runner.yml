@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
+      tags:
+        - soccerbooking-tests:latest
+    image: soccerbooking-tests:latest
     environment:
       APP_URL: ${APP_URL:-http://localhost:8009}
       DATABASE_URL: ${DATABASE_URL}
