@@ -23,16 +23,14 @@ from tests.conftest import APP_URL
 TZ = ZoneInfo("Europe/Paris")
 
 # A fixed Wednesday to use as the slot date in state-sensitive tests.
-# Pick one far enough in the future that the DB date uniqueness index doesn't
-# collide with real app usage, but any Wednesday works.
-TEST_WEDNESDAY = "2099-04-02"  # Wednesday
+# In 2099: Mon 2099-03-30, Wed 2099-04-01.
+TEST_WEDNESDAY = "2099-04-01"  # Wednesday
 
 # Canonical datetimes relative to TEST_WEDNESDAY:
-#   Monday 2099-03-31, Wednesday 2099-04-02
-OPEN_TIME   = datetime(2099, 3, 31, 14,  0, tzinfo=TZ)   # Monday 14:00   → OPEN
-CLOSED_TIME = datetime(2099, 4,  2, 18, 30, tzinfo=TZ)   # Wednesday 18:30 → CLOSED
-FROZEN_TIME = datetime(2099, 4,  2, 20,  0, tzinfo=TZ)   # Wednesday 20:00 → FROZEN
-PRE_OPEN_TIME = datetime(2099, 3, 31, 11, 0, tzinfo=TZ)  # Monday 11:00   → FROZEN (before noon)
+OPEN_TIME   = datetime(2099, 3, 30, 14,  0, tzinfo=TZ)   # Monday 14:00   → OPEN
+CLOSED_TIME = datetime(2099, 4,  1, 18, 30, tzinfo=TZ)   # Wednesday 18:30 → CLOSED
+FROZEN_TIME = datetime(2099, 4,  1, 20,  0, tzinfo=TZ)   # Wednesday 20:00 → FROZEN
+PRE_OPEN_TIME = datetime(2099, 3, 30, 11, 0, tzinfo=TZ)  # Monday 11:00   → FROZEN (before noon)
 
 
 # ── Internal helpers ─────────────────────────────────────────────────────────
@@ -214,7 +212,7 @@ async def at_time(client: httpx.AsyncClient, dt: datetime):
 # ── Legacy date constants (kept for backward compat with existing tests) ──────
 
 WEDNESDAY_PAST   = "2020-03-25"   # always FROZEN (past date)
-WEDNESDAY_FUTURE = "2099-04-02"   # TEST_WEDNESDAY alias
+WEDNESDAY_FUTURE = "2099-04-01"   # TEST_WEDNESDAY alias
 
 
 async def ui_login(page, username: str, pin: str = "1234") -> None:

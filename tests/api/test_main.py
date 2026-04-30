@@ -4,11 +4,11 @@ API tests — Main routes (/, /book, /cancel)
 Time control: uses POST /internal/set-time (requires TESTING=true on the app).
 All state-sensitive tests set the app clock explicitly via at_time().
 
-Slot date: TEST_WEDNESDAY = "2099-04-02" (Wednesday)
-  OPEN_TIME    = Monday 2099-03-31 14:00 Paris  → OPEN
-  CLOSED_TIME  = Wednesday 2099-04-02 18:30      → CLOSED
-  FROZEN_TIME  = Wednesday 2099-04-02 20:00      → FROZEN
-  PRE_OPEN_TIME= Monday 2099-03-31 11:00         → FROZEN (before noon)
+Slot date: TEST_WEDNESDAY = "2099-04-01" (Wednesday)
+  OPEN_TIME    = Monday 2099-03-30 14:00 Paris  → OPEN
+  CLOSED_TIME  = Wednesday 2099-04-01 18:30      → CLOSED
+  FROZEN_TIME  = Wednesday 2099-04-01 20:00      → FROZEN
+  PRE_OPEN_TIME= Monday 2099-03-30 11:00         → FROZEN (before noon)
 """
 
 import pytest
