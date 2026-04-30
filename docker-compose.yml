@@ -1,8 +1,10 @@
 services:
   app:
+    container_name: SoccerBooking
     build: .
     ports:
       - "8008:8000"
     env_file: .env
     volumes:
       - .:/app
+    restart: unless-stopped

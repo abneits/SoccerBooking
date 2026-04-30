@@ -1,0 +1,13 @@
+# Environment files — contain secrets, never commit
+.env
+.env.test
+tests/.env.runner
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Ruff cache
+.ruff_cache/

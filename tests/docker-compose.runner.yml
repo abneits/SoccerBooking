@@ -1,0 +1,13 @@
+services:
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:8009}
+      DATABASE_URL: ${DATABASE_URL}
+      TIMEZONE: ${TIMEZONE:-Europe/Paris}
+    network_mode: host
+    # Run a subset:
+    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest api/ -v
+    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest ui/ -v
