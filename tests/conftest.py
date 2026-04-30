@@ -85,6 +85,9 @@ async def page(browser):
     """Fresh browser page per test."""
     ctx = await browser.new_context(base_url=APP_URL)
     p = await ctx.new_page()
+    # Global navigation timeout: 10s max per goto/wait_for_url
+    p.set_default_navigation_timeout(10000)
+    p.set_default_timeout(10000)
     yield p
     await p.close()
     await ctx.close()
