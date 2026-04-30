@@ -2,7 +2,7 @@
 Black-box test suite for SoccerBooking.
 
 Requires two environment variables:
-  APP_URL      – base URL of the running app  (e.g. http://localhost:8008)
+  APP_URL      – base URL of the running app  (e.g. http://192.168.x.x:8009)
   DATABASE_URL – direct Postgres DSN for setup/teardown
 
 The DB is truncated before every test for full isolation.
@@ -18,14 +18,15 @@ from playwright.async_api import async_playwright
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-APP_URL = os.environ.get("APP_URL", "http://localhost:8008").rstrip("/")
+APP_URL = os.environ.get("APP_URL", "http://localhost:8009").rstrip("/")
 DATABASE_URL = os.environ["DATABASE_URL"]
 
 
-# ── Database pool ─────────────────────────────────────────────────────────────
+# ── Database pool (function-scoped to avoid event loop conflicts) ─────────────
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 async def db_pool():
+    """Fresh asyncpg pool per test — avoids cross-loop Future errors."""
     pool = await asyncpg.create_pool(DATABASE_URL)
     yield pool
     await pool.close()
@@ -41,7 +42,7 @@ async def reset_db(db_pool):
     yield
 
 
-# ── HTTP client (stateless — no shared cookies) ───────────────────────────────
+# ── HTTP client ───────────────────────────────────────────────────────────────
 
 @pytest.fixture
 async def client():
@@ -85,7 +86,6 @@ async def page(browser):
     """Fresh browser page per test."""
     ctx = await browser.new_context(base_url=APP_URL)
     p = await ctx.new_page()
-    # Global navigation timeout: 10s max per goto/wait_for_url
     p.set_default_navigation_timeout(10000)
     p.set_default_timeout(10000)
     yield p
