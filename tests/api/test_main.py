@@ -53,7 +53,7 @@ class TestHomePage:
         async with at_time(client, PRE_OPEN_TIME):
             r = await client.get("/")
         assert r.status_code == 200
-        assert b"lundi" in r.content.lower() or b"pas encore" in r.content or b"créneau" in r.content.lower()
+        assert b"lundi" in r.content.lower() or b"pas encore" in r.content or "créneau".encode() in r.content.lower()
 
     async def test_slot_created_after_monday_noon(self, client, db_pool):
         """get_or_create_upcoming_slot creates slot at Monday noon."""
