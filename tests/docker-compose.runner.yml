@@ -7,7 +7,10 @@ services:
       APP_URL: ${APP_URL:-http://localhost:8009}
       DATABASE_URL: ${DATABASE_URL}
       TIMEZONE: ${TIMEZONE:-Europe/Paris}
+      FORCE_COLOR: "1"
+      TERM: xterm-256color
     network_mode: host
+    tty: true
     # Run a subset:
     #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest api/ -v
     #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest ui/ -v
