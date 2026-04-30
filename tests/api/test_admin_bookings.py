@@ -14,6 +14,7 @@ from tests.helpers import (
     db_fetch_bookings,
     api_login,
     at_time,
+    decode_data,
     TEST_WEDNESDAY,
     OPEN_TIME,
     CLOSED_TIME,
@@ -98,7 +99,7 @@ class TestAdminCancelBooking:
             )
         assert r.status_code == 303
         row = await db_pool.fetchrow("SELECT data FROM bookings WHERE id = $1", wl["id"])
-        assert row["data"]["status"] == "confirmed"
+        assert decode_data(row)["status"] == "confirmed"
 
     async def test_cancel_promotes_waitlist_during_closed(self, admin_client, db_pool):
         slot = await db_create_slot(db_pool, TEST_WEDNESDAY)
@@ -121,7 +122,7 @@ class TestAdminCancelBooking:
             )
         assert r.status_code == 303
         row = await db_pool.fetchrow("SELECT data FROM bookings WHERE id = $1", wl["id"])
-        assert row["data"]["status"] == "confirmed"
+        assert decode_data(row)["status"] == "confirmed"
 
     async def test_redirect_goes_to_admin(self, admin_client, db_pool):
         bob = await db_create_user(db_pool, "bob")

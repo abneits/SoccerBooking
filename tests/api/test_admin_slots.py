@@ -10,6 +10,7 @@ from tests.helpers import (
     db_create_booking,
     db_get_slot,
     api_login,
+    decode_data,
 )
 
 
@@ -114,8 +115,8 @@ class TestPreCancelSlotByDate:
             "SELECT data FROM slots WHERE data->>'date' = '2099-06-04'"
         )
         assert row is not None
-        assert row["data"]["status"] == "cancelled"
-        assert row["data"]["cancelled_reason"] == "Férié"
+        assert decode_data(row)["status"] == "cancelled"
+        assert decode_data(row)["cancelled_reason"] == "Férié"
 
     async def test_updates_existing_slot_by_date(self, admin_client, db_pool):
         slot = await db_create_slot(db_pool, "2020-03-25")
@@ -142,7 +143,7 @@ class TestPreCancelSlotByDate:
         row = await db_pool.fetchrow(
             "SELECT data FROM slots WHERE data->>'date' = '2099-09-10'"
         )
-        assert row["data"]["cancelled_reason"] == "Vacances"
+        assert decode_data(row)["cancelled_reason"] == "Vacances"
 
     async def test_submitting_neither_id_nor_date_is_no_op(self, admin_client):
         """Neither slot_id nor date → no-op, redirect."""

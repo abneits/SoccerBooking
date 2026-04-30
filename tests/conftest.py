@@ -7,9 +7,12 @@ Requires two environment variables:
 
 The DB is truncated before every test for full isolation.
 The app itself is never imported — all interactions go through HTTP or raw SQL.
+
+JSONB: no custom codec. Data is inserted as json.dumps() strings with ::jsonb
+cast and decoded via helpers._data() on read. This matches how the app itself
+works and avoids any codec/encoding mismatch.
 """
 
-import json
 import os
 
 import asyncpg
@@ -25,24 +28,12 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 
 # ── Database pool ─────────────────────────────────────────────────────────────
 
-async def _init_conn(conn):
-    """Decode JSONB columns to Python dicts on read.
-    We never pass dicts as parameters — we always use json.dumps + ::jsonb cast —
-    so no encoder is needed and double-encoding is impossible.
-    """
-    await conn.set_type_codec(
-        "jsonb",
-        encoder=json.dumps,
-        decoder=json.loads,
-        schema="pg_catalog",
-        format="text",
-    )
-
-
 @pytest.fixture(autouse=True)
 async def db_pool():
-    """Fresh asyncpg pool per test. Truncates before yielding."""
-    pool = await asyncpg.create_pool(DATABASE_URL, init=_init_conn)
+    """Fresh asyncpg pool per test. Truncates before yielding.
+    No JSONB codec — matches how the app reads/writes JSONB.
+    """
+    pool = await asyncpg.create_pool(DATABASE_URL)
     async with pool.acquire() as conn:
         await conn.execute(
             "TRUNCATE bookings, slots, users RESTART IDENTITY CASCADE"

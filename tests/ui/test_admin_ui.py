@@ -12,6 +12,7 @@ from tests.helpers import (
     db_count_bookings,
     db_get_user,
     db_get_slot,
+    decode_data,
     ui_login,
 )
 
@@ -93,7 +94,7 @@ class TestSlotManagementUI:
             "SELECT data FROM slots WHERE data->>'date' = '2099-07-02'"
         )
         assert row is not None
-        assert row["data"]["status"] == "cancelled"
+        assert decode_data(row)["status"] == "cancelled"
 
     async def test_current_slot_displayed_when_exists(self, page, db_pool):
         await db_create_slot(db_pool, "2099-03-25")

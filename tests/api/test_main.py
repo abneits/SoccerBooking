@@ -20,6 +20,7 @@ from tests.helpers import (
     db_count_bookings,
     api_login,
     at_time,
+    decode_data,
     TEST_WEDNESDAY,
     OPEN_TIME,
     CLOSED_TIME,
@@ -346,7 +347,7 @@ class TestCancelEndpoint:
         b10 = await db_pool.fetchrow(
             "SELECT data FROM bookings WHERE (data->>'user_id')::int = $1", users[10]["id"]
         )
-        assert b10["data"]["status"] == "confirmed"
+        assert decode_data(b10)["status"] == "confirmed"
 
     async def test_cancel_own_guest_booking(self, client, db_pool):
         user = await db_create_user(db_pool, "alice")

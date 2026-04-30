@@ -4,7 +4,7 @@ Covers: GET/POST /register, GET/POST /login, GET /logout, session lifecycle.
 """
 
 import pytest
-from tests.helpers import db_create_user, api_login, api_register
+from tests.helpers import db_create_user, api_login, api_register, decode_data
 
 
 class TestRegisterPage:
@@ -35,8 +35,8 @@ class TestRegisterPost:
             "SELECT data FROM users WHERE data->>'username' = 'alice'"
         )
         assert row is not None
-        assert row["data"]["pin"] == "1234"
-        assert row["data"]["role"] == "player"
+        assert decode_data(row)["pin"] == "1234"
+        assert decode_data(row)["role"] == "player"
 
     async def test_strips_whitespace_from_username(self, client, db_pool):
         r = await api_register(client, "  alice  ", "1234")
