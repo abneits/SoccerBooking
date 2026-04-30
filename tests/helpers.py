@@ -35,6 +35,14 @@ FROZEN_TIME = datetime(2099, 4,  2, 20,  0, tzinfo=TZ)   # Wednesday 20:00 → F
 PRE_OPEN_TIME = datetime(2099, 3, 31, 11, 0, tzinfo=TZ)  # Monday 11:00   → FROZEN (before noon)
 
 
+# ── Internal helpers ─────────────────────────────────────────────────────────
+
+def _data(row) -> dict:
+    """Return row['data'] as a dict regardless of whether asyncpg decoded it."""
+    d = row["data"]
+    return json.loads(d) if isinstance(d, str) else d
+
+
 # ── DB seed helpers ───────────────────────────────────────────────────────────
 
 async def db_create_user(
@@ -52,7 +60,7 @@ async def db_create_user(
     row = await pool.fetchrow(
         "INSERT INTO users (data) VALUES ($1::jsonb) RETURNING id, data", data
     )
-    return {"id": row["id"], **row["data"]}
+    return {"id": row["id"], **_data(row)}
 
 
 async def db_create_slot(
@@ -71,7 +79,7 @@ async def db_create_slot(
     row = await pool.fetchrow(
         "INSERT INTO slots (data) VALUES ($1::jsonb) RETURNING id, data", data
     )
-    return {"id": row["id"], **row["data"]}
+    return {"id": row["id"], **_data(row)}
 
 
 async def db_create_booking(
@@ -103,7 +111,7 @@ async def db_create_booking(
     row = await pool.fetchrow(
         "INSERT INTO bookings (data) VALUES ($1::jsonb) RETURNING id, data", data
     )
-    return {"id": row["id"], **row["data"]}
+    return {"id": row["id"], **_data(row)}
 
 
 async def db_fill_slot(
@@ -128,7 +136,7 @@ async def db_fetch_bookings(pool: asyncpg.Pool, slot_id: int) -> list[dict]:
         "ORDER BY (data->>'position')::int",
         slot_id,
     )
-    return [{"id": r["id"], **r["data"]} for r in rows]
+    return [{"id": r["id"], **_data(r)} for r in rows]
 
 
 async def db_count_bookings(pool: asyncpg.Pool) -> int:
@@ -139,14 +147,14 @@ async def db_get_slot(pool: asyncpg.Pool, slot_id: int) -> Optional[dict]:
     row = await pool.fetchrow("SELECT id, data FROM slots WHERE id = $1", slot_id)
     if row is None:
         return None
-    return {"id": row["id"], **row["data"]}
+    return {"id": row["id"], **_data(row)}
 
 
 async def db_get_user(pool: asyncpg.Pool, user_id: int) -> Optional[dict]:
     row = await pool.fetchrow("SELECT id, data FROM users WHERE id = $1", user_id)
     if row is None:
         return None
-    return {"id": row["id"], **row["data"]}
+    return {"id": row["id"], **_data(row)}
 
 
 # ── HTTP helpers ──────────────────────────────────────────────────────────────
