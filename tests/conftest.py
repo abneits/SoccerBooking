@@ -9,6 +9,7 @@ The DB is truncated before every test for full isolation.
 The app itself is never imported — all interactions go through HTTP or raw SQL.
 """
 
+import json
 import os
 
 import asyncpg
@@ -24,10 +25,21 @@ DATABASE_URL = os.environ["DATABASE_URL"]
 
 # ── Database pool (function-scoped to avoid event loop conflicts) ─────────────
 
+async def _init_conn(conn):
+    """Register JSONB codec so asyncpg returns dicts instead of raw strings."""
+    await conn.set_type_codec(
+        "jsonb",
+        encoder=json.dumps,
+        decoder=json.loads,
+        schema="pg_catalog",
+        format="text",
+    )
+
+
 @pytest.fixture
 async def db_pool():
     """Fresh asyncpg pool per test — avoids cross-loop Future errors."""
-    pool = await asyncpg.create_pool(DATABASE_URL)
+    pool = await asyncpg.create_pool(DATABASE_URL, init=_init_conn)
     yield pool
     await pool.close()
 
