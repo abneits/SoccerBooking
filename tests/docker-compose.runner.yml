@@ -10,7 +10,9 @@ services:
       FORCE_COLOR: "1"
       TERM: xterm-256color
     network_mode: host
-    tty: true
-    # Run a subset:
-    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest api/ -v
-    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run tests pytest ui/ -v
+    # Lancer tous les tests (couleurs + exit automatique) :
+    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run --rm -T tests
+    #
+    # Sous-ensemble :
+    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run --rm -T tests pytest api/ -v
+    #   docker compose -f docker-compose.runner.yml --env-file .env.runner run --rm -T tests pytest ui/ -v

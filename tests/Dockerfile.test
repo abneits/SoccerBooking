@@ -36,4 +36,4 @@ RUN playwright install chromium
 
 COPY . .
 
-CMD ["pytest", "api/", "ui/", "-v", "--tb=short", "--no-header", "-p", "no:warnings"]
+CMD ["pytest"]
