@@ -225,20 +225,13 @@ async def ui_login(page, username: str, pin: str = "1234") -> None:
 
 
 async def ui_set_time(page, dt: datetime) -> None:
-    """Override app clock from Playwright (uses fetch via page.evaluate)."""
-    iso = dt.isoformat()
-    result = await page.evaluate(f"""
-        fetch('/internal/set-time', {{
-            method: 'POST',
-            headers: {{'Content-Type': 'application/json'}},
-            body: JSON.stringify({{iso: '{iso}'}})
-        }}).then(r => r.json())
-    """)
-    return result
+    """Override app clock via direct HTTP call (independent of page navigation)."""
+    async with httpx.AsyncClient(base_url=APP_URL) as c:
+        r = await c.post("/internal/set-time", json={"iso": dt.isoformat()})
+        assert r.status_code == 200, f"set_time failed: {r.status_code} {r.text}"
 
 
 async def ui_reset_time(page) -> None:
-    """Reset app clock from Playwright."""
-    await page.evaluate("""
-        fetch('/internal/reset-time', {method: 'POST'})
-    """)
+    """Reset app clock via direct HTTP call."""
+    async with httpx.AsyncClient(base_url=APP_URL) as c:
+        await c.post("/internal/reset-time")

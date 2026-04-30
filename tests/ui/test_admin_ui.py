@@ -205,11 +205,10 @@ class TestUserManagementUI:
     async def test_reset_pin_via_ui(self, page, db_pool):
         bob = await db_create_user(db_pool, "bob_pin_test", pin="1234")
         await ui_login_admin(page, db_pool)
-        # Find bob's row and fill PIN reset
-        # Use the hidden user_id input to locate the right form
+        # Target the reset-pin form for bob via :has()
         row_form = page.locator(
-            f'form[action="/admin/user/reset-pin"] input[value="{bob["id"]}"]'
-        ).locator("xpath=../..") # parent form
+            f'form[action="/admin/user/reset-pin"]:has(input[value="{bob["id"]}"])'
+        )
         await row_form.locator('input[name="new_pin"]').fill("8888")
         await row_form.locator('button[type="submit"]').click()
         await page.wait_for_url("**/admin**", timeout=5000)
@@ -226,8 +225,8 @@ class TestUserManagementUI:
         bob = await db_create_user(db_pool, "bob_role_test", pin="1234", role="player")
         await ui_login_admin(page, db_pool)
         role_form = page.locator(
-            f'form[action="/admin/user/set-role"] input[value="{bob["id"]}"]'
-        ).locator("xpath=../..") # parent form
+            f'form[action="/admin/user/set-role"]:has(input[value="{bob["id"]}"])'
+        )
         await role_form.locator('select[name="role"]').select_option("admin")
         await role_form.locator('button[type="submit"]').click()
         await page.wait_for_url("**/admin**", timeout=5000)
@@ -247,20 +246,18 @@ class TestUserManagementUI:
 
         dialog_fired = []
 
-        def handle_dialog(dialog):
+        async def handle_dialog(dialog):
             dialog_fired.append(dialog.message)
-            # Dismiss the dialog (cancel the delete)
-            import asyncio
-            asyncio.ensure_future(dialog.dismiss())
+            await dialog.dismiss()
 
-        page.on("dialog", handle_dialog)
+        page.on("dialog", lambda d: page._loop.create_task(handle_dialog(d)))
 
         delete_btn = page.locator(
             'form[action="/admin/user/delete"] button'
         ).first
         await delete_btn.click()
 
-        await page.wait_for_timeout(500)
+        await page.wait_for_timeout(1000)
         assert len(dialog_fired) > 0
 
     async def test_confirm_dialog_contains_username(self, page, db_pool):
@@ -269,35 +266,33 @@ class TestUserManagementUI:
 
         dialog_messages = []
 
-        def handle_dialog(dialog):
+        async def handle_dialog(dialog):
             dialog_messages.append(dialog.message)
-            import asyncio
-            asyncio.ensure_future(dialog.dismiss())
+            await dialog.dismiss()
 
-        page.on("dialog", handle_dialog)
+        page.on("dialog", lambda d: page._loop.create_task(handle_dialog(d)))
 
         delete_btn = page.locator(
             'form[action="/admin/user/delete"] button:has-text("Supprimer")'
         ).first
         await delete_btn.click()
-        await page.wait_for_timeout(500)
+        await page.wait_for_timeout(1000)
         assert any("named_user" in msg for msg in dialog_messages)
 
     async def test_dismiss_confirm_does_not_delete_user(self, page, db_pool):
         bob = await db_create_user(db_pool, "safe_bob", pin="1234")
         await ui_login_admin(page, db_pool)
 
-        def handle_dialog(dialog):
-            import asyncio
-            asyncio.ensure_future(dialog.dismiss())
+        async def handle_dialog(dialog):
+            await dialog.dismiss()
 
-        page.on("dialog", handle_dialog)
+        page.on("dialog", lambda d: page._loop.create_task(handle_dialog(d)))
 
         delete_btn = page.locator(
-            f'form[action="/admin/user/delete"] input[value="{bob["id"]}"]'
-        ).locator("xpath=../..").locator('button[type="submit"]')
+            f'form[action="/admin/user/delete"]:has(input[value="{bob["id"]}"]) button[type="submit"]'
+        )
         await delete_btn.click()
-        await page.wait_for_timeout(500)
+        await page.wait_for_timeout(1000)
         row = await db_get_user(db_pool, bob["id"])
         assert row is not None
 
@@ -305,15 +300,14 @@ class TestUserManagementUI:
         bob = await db_create_user(db_pool, "bye_bob", pin="1234")
         await ui_login_admin(page, db_pool)
 
-        def handle_dialog(dialog):
-            import asyncio
-            asyncio.ensure_future(dialog.accept())
+        async def handle_dialog(dialog):
+            await dialog.accept()
 
-        page.on("dialog", handle_dialog)
+        page.on("dialog", lambda d: page._loop.create_task(handle_dialog(d)))
 
         delete_btn = page.locator(
-            f'form[action="/admin/user/delete"] input[value="{bob["id"]}"]'
-        ).locator("xpath=../..").locator('button[type="submit"]')
+            f'form[action="/admin/user/delete"]:has(input[value="{bob["id"]}"]) button[type="submit"]'
+        )
         await delete_btn.click()
         await page.wait_for_url("**/admin**", timeout=5000)
         row = await db_get_user(db_pool, bob["id"])
